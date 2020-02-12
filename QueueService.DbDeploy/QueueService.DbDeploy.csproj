@@ -1,0 +1,64 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Scripts\0001-CreateTableQueueWorker.sql" />
+    <None Remove="Scripts\0002-CreateTableQueueItem.sql" />
+    <None Remove="Scripts\0003-CreateSPGetNextId.sql" />
+    <None Remove="Scripts\0004-CreateSPSetFailed.sql" />
+    <None Remove="Scripts\0005-CreateSPSetSuccess.sql" />
+    <None Remove="Scripts\0006-CreateIndexQueueItem.sql" />
+    <None Remove="Scripts\0007-CreateSPUnlockStuckQueueItems.sql" />
+    <None Remove="Scripts\0008-CreateSPArchiveQueueItems.sql" />
+    <None Remove="Scripts\0009-CreateTableQueueItemArchive.sql" />
+    <None Remove="Scripts\0010-AlterTableQueueItem-AddUniqueKey.sql" />
+    <None Remove="Scripts\0011-AlterSPArchiveQueueItem-AddUniqueKey.sql" />
+    <None Remove="Scripts\0012-CreateSPInsertQueueItem.sql" />
+    <None Remove="Scripts\0013-AlterTableQueueWorker-AddIndexName.sql" />
+    <None Remove="Scripts\0014-AlterTableQueueWorker-AddColumn-ApiKey.sql" />
+    <None Remove="Scripts\0015-AlterSPGetNext-AddBatchSize-Retries.sql" />
+    <None Remove="Scripts\0016-CreateSpHasItems.sql" />
+    <None Remove="Scripts\0017-UpdateSPSetFailed.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts\0001-CreateTableQueueWorker.sql" />
+    <EmbeddedResource Include="Scripts\0017-UpdateSPSetFailed.sql" />
+    <EmbeddedResource Include="Scripts\0016-CreateSpHasItems.sql" />
+    <EmbeddedResource Include="Scripts\0015-AlterSPGetNext-AddBatchSize-Retries.sql" />
+    <EmbeddedResource Include="Scripts\0014-AlterTableQueueWorker-AddColumn-ApiKey.sql" />
+    <EmbeddedResource Include="Scripts\0013-AlterTableQueueWorker-AddIndexName.sql" />
+    <EmbeddedResource Include="Scripts\0012-CreateSPInsertQueueItem.sql" />
+    <EmbeddedResource Include="Scripts\0011-AlterSPArchiveQueueItem-AddUniqueKey.sql" />
+    <EmbeddedResource Include="Scripts\0010-AlterTableQueueItem-AddUniqueKey.sql" />
+    <EmbeddedResource Include="Scripts\0009-CreateTableQueueItemArchive.sql" />
+    <EmbeddedResource Include="Scripts\0008-CreateSPArchiveQueueItems.sql" />
+    <EmbeddedResource Include="Scripts\0007-CreateSPUnlockStuckQueueItems.sql" />
+    <EmbeddedResource Include="Scripts\0006-CreateIndexQueueItem.sql" />
+    <EmbeddedResource Include="Scripts\0005-CreateSPSetSuccess.sql" />
+    <EmbeddedResource Include="Scripts\0004-CreateSPSetFailed.sql" />
+    <EmbeddedResource Include="Scripts\0003-CreateSPGetNextId.sql" />
+    <EmbeddedResource Include="Scripts\0002-CreateTableQueueItem.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dbup" Version="4.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\QueueService.Model\QueueService.Model.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

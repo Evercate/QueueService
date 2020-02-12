@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "QueueService.Runner": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
