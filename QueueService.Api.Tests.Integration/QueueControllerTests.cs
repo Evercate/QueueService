@@ -7,9 +7,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using QueueService.Api.Model;
 using System;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -154,6 +156,44 @@ namespace QueueService.Api.Tests.Integration
 
             using var response2 = await client.SendAsync(request2, CancellationToken.None);
             Assert.AreEqual(System.Net.HttpStatusCode.Unauthorized, response2.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task PostExecuteInThePast()
+        {
+            string payload = System.Text.Json.JsonSerializer.Serialize(new EnqueueRequest { Payload = "test", QueueName = "test", ExecuteOn = DateTime.UtcNow.AddMinutes(-5) });
+
+            var request = new HttpRequestMessage(new HttpMethod("POST"), new Uri(client.BaseAddress, "/queue"));
+           
+            request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+      
+            request.Headers.Date = DateTimeOffset.UtcNow;
+            var nonce = Guid.NewGuid().ToString();
+            request.Headers.Add("Nonce", nonce);
+            string authenticationSignature = SignatureHelper.Calculate("devhmacsecret", SignatureHelper.Generate(request.Headers.Date.Value, payload, request.Method.Method, request.RequestUri.AbsolutePath, request.RequestUri.Query, nonce));
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("HMAC", "DevQueueService:" + authenticationSignature);
+
+            using var response = await client.SendAsync(request, CancellationToken.None);
+            Assert.AreEqual(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task PostExecuteWorkerNotExists()
+        {
+            string payload = System.Text.Json.JsonSerializer.Serialize(new EnqueueRequest { Payload = "test", QueueName = "test"});
+
+            var request = new HttpRequestMessage(new HttpMethod("POST"), new Uri(client.BaseAddress, "/queue"));
+
+            request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+
+            request.Headers.Date = DateTimeOffset.UtcNow;
+            var nonce = Guid.NewGuid().ToString();
+            request.Headers.Add("Nonce", nonce);
+            string authenticationSignature = SignatureHelper.Calculate("devhmacsecret", SignatureHelper.Generate(request.Headers.Date.Value, payload, request.Method.Method, request.RequestUri.AbsolutePath, request.RequestUri.Query, nonce));
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("HMAC", "DevQueueService:" + authenticationSignature);
+
+            using var response = await client.SendAsync(request, CancellationToken.None);
+            Assert.AreEqual(System.Net.HttpStatusCode.InternalServerError, response.StatusCode);
         }
 
     }
