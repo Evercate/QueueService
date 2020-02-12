@@ -23,7 +23,7 @@
       },
       "own-errors-web-mail": {
         "type": "Mail",
-        "subject": "Queue service API - ${message} - ${longdate:universalTime=true}(UTC)",
+        "subject": "Queue service Runner - ${message} - ${longdate:universalTime=true}(UTC)",
         "html": true,
         "addNewLines": true,
         "replaceNewlineWithBrTagInHtml": true,
