@@ -30,7 +30,7 @@ namespace QueueService.Api.Tests.Integration
                 .ConfigureWebHost(webHost =>
                 {
                     webHost.UseTestServer();
-                    webHost.UseStartup<QueueService.Api.Startup>();
+                    webHost.UseStartup<Startup>();
                 });
             hostBuilder.ConfigureAppConfiguration((context, conf) =>
             {
@@ -40,7 +40,7 @@ namespace QueueService.Api.Tests.Integration
             var host = await hostBuilder.StartAsync();
 
             client = host.GetTestClient();
-            client.BaseAddress = new System.Uri(client.BaseAddress.ToString().Replace("http", "https"));
+            client.BaseAddress = new Uri(client.BaseAddress.ToString().Replace("http", "https"));
         }
         [TestMethod]
         public async Task GetRootUrlTest()
@@ -182,9 +182,10 @@ namespace QueueService.Api.Tests.Integration
         {
             string payload = System.Text.Json.JsonSerializer.Serialize(new EnqueueRequest { Payload = "test", QueueName = "test"});
 
-            var request = new HttpRequestMessage(new HttpMethod("POST"), new Uri(client.BaseAddress, "/queue"));
-
-            request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+            var request = new HttpRequestMessage(new HttpMethod("POST"), new Uri(client.BaseAddress, "/queue"))
+            {
+                Content = new StringContent(payload, Encoding.UTF8, "application/json")
+            };
 
             request.Headers.Date = DateTimeOffset.UtcNow;
             var nonce = Guid.NewGuid().ToString();
