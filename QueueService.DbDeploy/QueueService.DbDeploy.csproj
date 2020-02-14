@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="appsettings.json" />
     <None Remove="Scripts\0001-CreateTableQueueWorker.sql" />
     <None Remove="Scripts\0002-CreateTableQueueItem.sql" />
     <None Remove="Scripts\0003-CreateSPGetNextId.sql" />
@@ -24,6 +25,12 @@
     <None Remove="Scripts\0015-AlterSPGetNext-AddBatchSize-Retries.sql" />
     <None Remove="Scripts\0016-CreateSpHasItems.sql" />
     <None Remove="Scripts\0017-UpdateSPSetFailed.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -56,9 +63,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <Content Update="appsettings.*.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
 </Project>
