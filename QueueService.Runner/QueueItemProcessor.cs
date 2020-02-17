@@ -123,11 +123,10 @@ namespace QueueService.Runner
         private async Task ProcessItem(QueueItem item, CancellationToken cancellationToken)
         {
             var nextRun = DateTime.UtcNow.AddSeconds(item.QueueWorker.RetryDelay + item.QueueWorker.RetryDelay * item.Tries * item.QueueWorker.RetryDelayMultiplier);
+            var startTime = DateTime.UtcNow;
 
             try
             {
-                var startTime = DateTime.UtcNow;
-
                 var request = new HttpRequestMessage(new HttpMethod(item.QueueWorker.Method), item.QueueWorker.Endpoint);
                 if (!string.IsNullOrEmpty(item.Payload))
                 {
@@ -159,16 +158,13 @@ namespace QueueService.Runner
 
                 var response = await client.SendAsync(request, cancellationToken);
 
-                var timeTaken = DateTime.UtcNow.Subtract(startTime);
-                logger.LogInformation($"Finished item {item.Id}. Total Time: {timeTaken}");
-
                 if (response.IsSuccessStatusCode)
                 {
                     await queueItemRepository.SetSuccess(item.Id);
                 }
                 else
                 {
-                    throw new Exception($"Error processing queue item. Endpoint returned status code {response.StatusCode} {response.ReasonPhrase}");                    
+                    throw new Exception($"Error processing queue item {item.Id}. Endpoint returned status code: {response.StatusCode} {response.ReasonPhrase}");                    
                 }
             }
             catch(Exception ex)
@@ -181,6 +177,11 @@ namespace QueueService.Runner
                 {
                     logger.LogWarning($"Queue item set to error state and will not be retried again. Queue item Id: {resultItem.Id}");
                 }
+            }
+            finally
+            {
+                var timeTaken = DateTime.UtcNow.Subtract(startTime);
+                logger.LogInformation($"Finished item {item.Id}. Total Time: {timeTaken}");
             }
         }
     }
