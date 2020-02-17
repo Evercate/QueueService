@@ -4,10 +4,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using QueueService.DAL;
 using QueueService.Model;
-using QueueService.Model.Settings;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -32,7 +30,7 @@ namespace QueueService.Runner
             IQueueWorkerRepository queueWorkerRepository,
             IOptions<AppSettings> config,
             ILogger<QueueItemProcessor> logger
-)
+        )
         {
             this.config = config.Value;
             this.logger = logger;
@@ -69,7 +67,7 @@ namespace QueueService.Runner
 
                     using (var connection = sqlConnectionFactory.GetConnection())
                     {
-                        await connection.OpenAsync(cancellationToken);
+                        await sqlConnectionFactory.OpenAsync(connection, cancellationToken);
                         if (!hasItems)
                         {
                             hasItems = await queueItemRepository.HasItems(connection);
@@ -77,7 +75,7 @@ namespace QueueService.Runner
                             {
                                 logger.LogInformation($"No items to process, going to sleep for {config.NoQueueItemsToProcessSleepTimeMS} milliseconds");
                                 await Task.Delay(config.NoQueueItemsToProcessSleepTimeMS, cancellationToken);
-                                connection.Close();
+                                sqlConnectionFactory.Close(connection);
                                 continue;
                             }
                         }
@@ -93,7 +91,7 @@ namespace QueueService.Runner
                                 break;
                             }
                         }
-                        connection.Close();
+                        sqlConnectionFactory.Close(connection);
                     }
 
                     if (!allItems.Any())

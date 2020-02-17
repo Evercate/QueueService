@@ -6,6 +6,8 @@ using QueueService.DAL;
 using QueueService.Model;
 using QueueService.Model.Settings;
 using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,7 +49,6 @@ namespace QueueService.Runner.Tests
         private Mock<IQueueItemRepository> queueItemRepositoryMock;
         private Mock<IQueueWorkerRepository> queueWorkerRepositoryMock;
         private Mock<ILogger<QueueItemProcessor>> loggerMock;
-
       
         [TestInitialize]
         public void Initialize()
@@ -64,7 +65,7 @@ namespace QueueService.Runner.Tests
                 sqlConnectionFactoryMock.Object,
                 queueItemRepositoryMock.Object, 
                 queueWorkerRepositoryMock.Object, 
-                Options.Create(new AppSettings { }), 
+                Options.Create(new AppSettings {NoQueueItemsToProcessSleepTimeMS = 100}), 
                 loggerMock.Object
                 );
         }
@@ -134,6 +135,93 @@ namespace QueueService.Runner.Tests
 
             queueItemRepositoryMock.Verify(r => r.SetSuccess(queueItem.Id), Times.Never);
             queueItemRepositoryMock.Verify(r => r.SetFailed(queueItem.Id, It.IsAny<string>(), It.IsAny<DateTime?>()), Times.Once);
+        }
+
+        [TestMethod]
+        public async Task BackgroundProcessingCancelled()
+        {
+            using (var cancellationTokenSource = new CancellationTokenSource())
+            {
+                var task = queueItemProcessor.BackgroundProcessingPublic(cancellationTokenSource.Token);
+
+                cancellationTokenSource.Cancel();
+
+                await Task.Delay(500);
+                Assert.IsTrue(task.IsCompleted);
+            }
+        }
+
+        [TestMethod]
+        public async Task BackgroundProcessingGetZeroWorkers()
+        {
+            queueWorkerRepositoryMock.Setup(r => r.GetQueueWorkers(It.IsAny<SqlConnection>())).ReturnsAsync(new List<QueueWorker>());
+            queueItemRepositoryMock.Setup(r => r.HasItems(It.IsAny<SqlConnection>())).ReturnsAsync(false);
+
+            using (var cancellationTokenSource = new CancellationTokenSource())
+            {
+                var token = cancellationTokenSource.Token;
+                var task = queueItemProcessor.BackgroundProcessingPublic(token);
+                
+                await Task.Delay(500);
+                cancellationTokenSource.Cancel();
+            }
+
+            queueItemRepositoryMock.Verify(r => r.HasItems(It.IsAny<SqlConnection>()), Times.AtLeastOnce);
+        }
+
+
+        [TestMethod]
+        public async Task BackgroundProcessingGetZeroItems()
+        {
+            var queueItem = GenerateItem();
+
+            queueWorkerRepositoryMock.Setup(r => r.GetQueueWorkers(It.IsAny<SqlConnection>())).ReturnsAsync(new List<QueueWorker>() { queueItem.QueueWorker });
+            queueItemRepositoryMock.Setup(r => r.HasItems(It.IsAny<SqlConnection>())).ReturnsAsync(false);
+            queueItemRepositoryMock.Setup(r => r.GetQueueItems(It.IsAny<SqlConnection>(), queueItem.QueueWorker.Id, queueItem.QueueWorker.Retries, queueItem.QueueWorker.BatchSize)).ReturnsAsync(new List<QueueItem>());
+            using (var cancellationTokenSource = new CancellationTokenSource())
+            {
+                var token = cancellationTokenSource.Token;
+                var task = queueItemProcessor.BackgroundProcessingPublic(token);
+
+                await Task.Delay(500);
+                cancellationTokenSource.Cancel();
+            }
+
+            queueItemRepositoryMock.Verify(r => r.HasItems(It.IsAny<SqlConnection>()), Times.AtLeastOnce);
+            queueItemRepositoryMock.Verify(r => r.GetQueueItems(It.IsAny<SqlConnection>(), queueItem.QueueWorker.Id, queueItem.QueueWorker.Retries, queueItem.QueueWorker.BatchSize), Times.Once);
+
+        }
+
+        [TestMethod]
+        public async Task BackgroundProcessingTestRetry()
+        {
+            var queueItem = GenerateItem();
+
+            queueWorkerRepositoryMock.Setup(r => r.GetQueueWorkers(It.IsAny<SqlConnection>())).ReturnsAsync(new List<QueueWorker>() { queueItem.QueueWorker });
+            queueItemRepositoryMock.Setup(r => r.HasItems(It.IsAny<SqlConnection>())).ReturnsAsync(false);
+            queueItemRepositoryMock.Setup(r => r.GetQueueItems(It.IsAny<SqlConnection>(), queueItem.QueueWorker.Id, queueItem.QueueWorker.Retries, queueItem.QueueWorker.BatchSize)).ReturnsAsync(new List<QueueItem>() {queueItem });
+
+            clientMock.Setup(c => c.SendAsync(It.Is<HttpRequestMessage>(
+                r => r.Method == HttpMethod.Post
+                && r.RequestUri.AbsoluteUri.Equals(queueItem.QueueWorker.Endpoint, StringComparison.InvariantCultureIgnoreCase)),
+                It.IsAny<CancellationToken>()
+                )).ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.NotFound, ReasonPhrase = "Not Found" });
+
+            clientFactoryMock.Setup(c => c.CreateClient(It.IsAny<string>())).Returns(clientMock.Object);
+
+            using (var cancellationTokenSource = new CancellationTokenSource())
+            {
+                var token = cancellationTokenSource.Token;
+                var task = queueItemProcessor.BackgroundProcessingPublic(token);
+
+                await Task.Delay(500);
+                cancellationTokenSource.Cancel();
+            }
+
+            queueItemRepositoryMock.Verify(r => r.HasItems(It.IsAny<SqlConnection>()), Times.Never);
+            queueItemRepositoryMock.Verify(r => r.GetQueueItems(It.IsAny<SqlConnection>(), queueItem.QueueWorker.Id, queueItem.QueueWorker.Retries, queueItem.QueueWorker.BatchSize), Times.AtLeastOnce);
+
+            queueItemRepositoryMock.Verify(r => r.SetFailed(queueItem.Id, It.IsAny<string>(), It.IsAny<DateTime?>()), Times.AtLeastOnce);
         }
     }
 }
