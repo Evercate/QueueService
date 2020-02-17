@@ -68,7 +68,7 @@ namespace QueueService.Runner
 
                     using (var connection = new SqlConnection(databaseSettings.ConnectionString))
                     {
-                        await connection.OpenAsync();
+                        await connection.OpenAsync(cancellationToken);
                         if (!hasItems)
                         {
                             hasItems = await queueItemRepository.HasItems(connection);
@@ -168,13 +168,7 @@ namespace QueueService.Runner
                 }
                 else
                 {
-                    var resultItem = await queueItemRepository.SetFailed(item.Id, await response.Content.ReadAsStringAsync(), nextRun);
-
-                    //If error state is set it will not retry again so we send out warning
-                    if(resultItem.State == QueueItemState.Error)
-                    {
-                        logger.LogWarning($"Queue item set to error state and will not be retried again. Queue item Id: {resultItem.Id}");
-                    }
+                    throw new Exception($"Error processing queue item. Endpoint returned status code {response.StatusCode} {response.ReasonPhrase}");                    
                 }
             }
             catch(Exception ex)
