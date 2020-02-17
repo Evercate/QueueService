@@ -69,8 +69,7 @@ namespace QueueService.Runner.Tests
                 );
         }
 
-        [TestMethod]
-        public async Task ProcessItemTest()
+        private QueueItem GenerateItem()
         {
             var queueItem = new QueueItem
             {
@@ -93,6 +92,14 @@ namespace QueueService.Runner.Tests
                 QueueWorkerId = 1
             };
 
+            return queueItem;
+        }
+
+        [TestMethod]
+        public async Task ProcessItemTestSuccess()
+        {
+
+            var queueItem = GenerateItem();
 
             clientMock.Setup(c => c.SendAsync(It.Is<HttpRequestMessage>(
                 r => r.Method == HttpMethod.Post
@@ -106,6 +113,27 @@ namespace QueueService.Runner.Tests
 
             queueItemRepositoryMock.Verify(r => r.SetSuccess(queueItem.Id), Times.Once);
             queueItemRepositoryMock.Verify(r => r.SetFailed(queueItem.Id, It.IsAny<string>(), It.IsAny<DateTime?>()), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ProcessItemTestFailed()
+        {
+            var queueItem = GenerateItem();
+
+            clientMock.Setup(c => c.SendAsync(It.Is<HttpRequestMessage>(
+                r => r.Method == HttpMethod.Post
+                && r.RequestUri.AbsoluteUri.Equals(queueItem.QueueWorker.Endpoint, StringComparison.InvariantCultureIgnoreCase)),
+                It.IsAny<CancellationToken>()
+                )).ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.NotFound, ReasonPhrase = "Not Found"});
+
+            clientFactoryMock.Setup(c => c.CreateClient(It.IsAny<string>())).Returns(clientMock.Object);
+            queueItemRepositoryMock.Setup(r => r.SetFailed(queueItem.Id, It.IsAny<string>(), It.IsAny<DateTime?>())).ReturnsAsync(queueItem);
+
+
+            await queueItemProcessor.ProcessItemPublic(queueItem, CancellationToken.None);
+
+            queueItemRepositoryMock.Verify(r => r.SetSuccess(queueItem.Id), Times.Never);
+            queueItemRepositoryMock.Verify(r => r.SetFailed(queueItem.Id, It.IsAny<string>(), It.IsAny<DateTime?>()), Times.Once);
         }
     }
 }

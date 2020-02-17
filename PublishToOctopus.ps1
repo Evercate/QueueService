@@ -49,6 +49,7 @@ md -Force .\Build\Api | Out-Null
 md -Force .\Build\Runner | Out-Null
 md -Force .\Build\DbDeploy | Out-Null
 md -Force .\Build\Api.Tests.Integration | Out-Null
+md -Force .\Build\Runner.Tests | Out-Null
 
 
 dotnet publish .\QueueService.Api\QueueService.Api.csproj --output .\Build\Api --configuration Release
@@ -62,6 +63,9 @@ dotnet octo pack --basePath .\Build\Runner --id="QueueService.Runner" --version=
 
 dotnet publish .\QueueService.Api.Tests.Integration\QueueService.Api.Tests.Integration.csproj --output .\Build\Api.Tests.Integration --configuration Release
 dotnet octo pack --basePath .\Build\Api.Tests.Integration --id="QueueService.Api.Tests.Integration" --version=$newVersion --outFolder=.\Build
+
+dotnet publish .\QueueService.Runner.Tests\QueueService.Runner.Tests.csproj --output .\Build\Runner.Tests --configuration Release
+dotnet octo pack --basePath .\Build\Runner.Tests --id="QueueService.Runner.Tests" --version=$newVersion --outFolder=.\Build
 
 Write-Host "Press enter to publish (or close to not publish)" -BackgroundColor Black -ForegroundColor Cyan
 Read-Host
