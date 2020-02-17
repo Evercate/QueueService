@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 namespace QueueService.Api.Tests.Integration
 {
     [TestClass]
+    [TestCategory("Integration")]
     public class ClientTests
     {
         private static HttpClient client;

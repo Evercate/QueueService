@@ -48,6 +48,7 @@ namespace QueueService.Runner
 
                     services.Configure<AppSettings>(configuration.GetSection("ApplicationSettings"));
                     services.Configure<DatabaseSettings>(configuration.GetSection("ApplicationSettings"));
+                    services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
                     services.AddSingleton<IQueueWorkerRepository, QueueWorkerRepository>();
                     services.AddSingleton<IQueueItemRepository, QueueItemRepository>();
                     services.AddHostedService<QueueItemProcessor>();

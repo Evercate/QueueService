@@ -19,26 +19,27 @@ namespace QueueService.Runner
     public class QueueItemProcessor : BackgroundService
     {
         private readonly AppSettings config;
-        private readonly DatabaseSettings databaseSettings;
         private readonly ILogger<QueueItemProcessor> logger;
         private readonly IQueueItemRepository queueItemRepository;
         private readonly IQueueWorkerRepository queueWorkerRepository;
         private readonly IHttpClientFactory clientFactory;
+        private readonly ISqlConnectionFactory sqlConnectionFactory;
 
         public QueueItemProcessor(
             IHttpClientFactory clientFactory,
+            ISqlConnectionFactory sqlConnectionFactory,
             IQueueItemRepository queueItemRepository,
             IQueueWorkerRepository queueWorkerRepository,
             IOptions<AppSettings> config,
-            ILogger<QueueItemProcessor> logger,
-            IOptions<DatabaseSettings> databaseSettings)
+            ILogger<QueueItemProcessor> logger
+)
         {
             this.config = config.Value;
-            this.databaseSettings = databaseSettings.Value;
             this.logger = logger;
             this.queueItemRepository = queueItemRepository;
             this.queueWorkerRepository = queueWorkerRepository;
             this.clientFactory = clientFactory;
+            this.sqlConnectionFactory = sqlConnectionFactory;
         }
 
         public override async Task StartAsync(CancellationToken cancellationToken)
@@ -57,7 +58,7 @@ namespace QueueService.Runner
         {
             await BackgroundProcessing(cancellationToken);
         }
-        private async Task BackgroundProcessing(CancellationToken cancellationToken)
+        protected async Task BackgroundProcessing(CancellationToken cancellationToken)
         {
             bool hasItems = true;
             while (!cancellationToken.IsCancellationRequested)
@@ -66,7 +67,7 @@ namespace QueueService.Runner
                 {
                     var allItems = new List<QueueItem>();
 
-                    using (var connection = new SqlConnection(databaseSettings.ConnectionString))
+                    using (var connection = sqlConnectionFactory.GetConnection())
                     {
                         await connection.OpenAsync(cancellationToken);
                         if (!hasItems)
@@ -109,7 +110,6 @@ namespace QueueService.Runner
                         allTasks.Add(ProcessItem(item, cancellationToken));
                     }
                     await Task.WhenAll(allTasks);
-
                 }
                 catch (Exception ex)
                 {
@@ -120,7 +120,7 @@ namespace QueueService.Runner
             logger.LogInformation("QueueProcessor Service is cancelled.");
         }
 
-        private async Task ProcessItem(QueueItem item, CancellationToken cancellationToken)
+        protected async Task ProcessItem(QueueItem item, CancellationToken cancellationToken)
         {
             var nextRun = DateTime.UtcNow.AddSeconds(item.QueueWorker.RetryDelay + item.QueueWorker.RetryDelay * item.Tries * item.QueueWorker.RetryDelayMultiplier);
             var startTime = DateTime.UtcNow;
@@ -154,7 +154,7 @@ namespace QueueService.Runner
                 }
 
                 var client = clientFactory.CreateClient(item.QueueWorker.Name);
-                client.Timeout = new TimeSpan(0, 0, item.QueueWorker.MaxProcessingTime);
+                client.Timeout = new TimeSpan(0, 0, item.QueueWorker.MaxProcessingTime == 0 ? 30 : item.QueueWorker.MaxProcessingTime);
 
                 var response = await client.SendAsync(request, cancellationToken);
 
