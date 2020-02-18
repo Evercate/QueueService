@@ -42,19 +42,22 @@ namespace QueueService.Runner
 
         private async Task BackgroundProcessing(CancellationToken cancellationToken)
         {
+            var delay = config.UnlockStuckItemsSleepTimeMS == 0 ? 10000 : config.UnlockStuckItemsSleepTimeMS;
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
                     logger.LogInformation("Unlocking stuck queue items.");
                     await queueItemRepository.UnlockStuckQueueItems();
-                    logger.LogInformation($"QueueItemUnlocker Service is going to sleep for {config.UnlockStuckItemsSleepTimeMS} milliseconds.");
-                    await Task.Delay(config.UnlockStuckItemsSleepTimeMS, cancellationToken);
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, $"Error unlocking queue items.");
-                    await Task.Delay(config.ArchiveQueueItemsSleepTimeMS, cancellationToken);
+                }
+                finally
+                {
+                    logger.LogInformation($"QueueItemUnlocker Service is going to sleep for {delay} milliseconds.");
+                    await Task.Delay(delay, cancellationToken);
                 }
             }
             logger.LogInformation("QueueItemUnlocker Service is cancelled.");

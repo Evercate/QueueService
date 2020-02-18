@@ -12,6 +12,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
+//[assembly: Parallelize(Workers = 0, Scope = ExecutionScope.MethodLevel)]
+
 namespace QueueService.Api.Tests.Integration
 {
     [TestClass]
@@ -29,7 +31,7 @@ namespace QueueService.Api.Tests.Integration
                 .ConfigureWebHost(webHost =>
                 {
                     webHost.UseTestServer();
-                    webHost.UseStartup<QueueService.Api.Startup>();
+                    webHost.UseStartup<Startup>();
                 });
             hostBuilder.ConfigureAppConfiguration((context, conf) =>
             {
@@ -39,7 +41,7 @@ namespace QueueService.Api.Tests.Integration
             var host = await hostBuilder.StartAsync();
 
             client = host.GetTestClient();
-            client.BaseAddress = new System.Uri(client.BaseAddress.ToString().Replace("http", "https"));
+            client.BaseAddress = new Uri(client.BaseAddress.ToString().Replace("http", "https"));
 
             loggerMock = new Mock<ILogger<Client.QueueApiClient>>();
 

@@ -42,19 +42,23 @@ namespace QueueService.Runner
 
         private async Task BackgroundProcessing(CancellationToken cancellationToken)
         {
+            var sleepTime = config.ArchiveQueueItemsSleepTimeMS == 0 ? 120000 : config.ArchiveQueueItemsSleepTimeMS;
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
                     logger.LogInformation($"Archiving finished queue items older than {config.ArchiveQueueItemsAgeDays} days.");
                     await queueItemRepository.ArchiveQueueItems(config.ArchiveQueueItemsAgeDays);
-                    logger.LogInformation($"QueueItemArchiver Service is going to sleep for {config.ArchiveQueueItemsSleepTimeMS} milliseconds.");
-                    await Task.Delay(config.ArchiveQueueItemsSleepTimeMS, cancellationToken);
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, $"Error archiving queue items.");
-                    await Task.Delay(config.ArchiveQueueItemsSleepTimeMS, cancellationToken);
+                }
+                finally
+                {
+                    logger.LogInformation($"QueueItemArchiver Service is going to sleep for {sleepTime} milliseconds.");
+                    await Task.Delay(sleepTime, cancellationToken);
                 }
             }
             logger.LogInformation("QueueItemArchiver Service is cancelled.");
