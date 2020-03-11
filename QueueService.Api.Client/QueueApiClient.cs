@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using QueueService.Api.Client.Exceptions;
 using QueueService.Api.Model;
 using System;
 using System.Net.Http;
@@ -44,39 +45,42 @@ namespace QueueService.Api.Client
         /// <returns></returns>
         public async Task<EnqueueResponse> EnqueueAsync(EnqueueRequest request)
         {
-            string jsonPayload = null;
+            var jsonPayload = JsonConvert.SerializeObject(request);
+            var startTime = DateTime.UtcNow;
 
-            try
+            for (int i = 0; i <= config.Retries; i++)
             {
-                jsonPayload = JsonConvert.SerializeObject(request);
-                var startTime = DateTime.UtcNow;
-
+                //For each try we must redo the entire request as hmac specifics (nonce, time) needs to be updated
                 using (var httpRequest = new HttpRequestMessage(new HttpMethod("POST"), new Uri(httpClient.BaseAddress, "queue")))
                 {
                     httpRequest.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
                     SignatureHelper.SetHmacHeaders(httpRequest, config.Key, config.Secret, jsonPayload);
 
-                    using (var response = await httpClient.SendAsync(httpRequest, CancellationToken.None))
+                    var response = await httpClient.SendAsync(httpRequest, CancellationToken.None);
+                    
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    if (response.IsSuccessStatusCode)
                     {
-                        var responseString = await response.Content.ReadAsStringAsync();
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var result = JsonConvert.DeserializeObject<EnqueueResponse>(responseString);
-                            return result;
-                        }
-                        var timeTaken = DateTime.UtcNow.Subtract(startTime);
-
-                        var exception = new Exception($"Http call to enqueue failed. It took {timeTaken.TotalSeconds}s and response code was \"{response.StatusCode}\" with message \"{response.ReasonPhrase}\" payload was: {jsonPayload}. Response content was: {responseString}");
-                        throw exception;
+                        var result = JsonConvert.DeserializeObject<EnqueueResponse>(responseString);
+                        return result;
                     }
-                }
+                    var timeTaken = DateTime.UtcNow.Subtract(startTime);
+                    var callInformation = $"Call took {timeTaken.TotalSeconds}s and response code was \"{response.StatusCode}\" with message \"{response.ReasonPhrase}\" and response content: \"{responseString}\" payload was: \"{jsonPayload}\". it was for queue \"{request.QueueName}\" with unique name \"{request.UniqueKey}\" and was to be executed \"{(request.ExecuteOn.HasValue ? request.ExecuteOn.Value.ToString("yyyy-MM-dd HH:mm:ss") : "immidately")}\". ";
+
+                    logger.LogWarning($"Enqueue attempt failed. This was attempt {(i + 1)} of {(config.Retries + 1)}. {callInformation}");
+
+                    if (i < config.Retries)
+                    {
+                        await Task.Delay(config.RetryDelay * 1000);
+                    }
+                    
+                }            
+
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, $"Error enqueuing, payload: {jsonPayload}");
-                throw;
-            }
+
+            throw new EnqueueFailedException($"Failed to enqueue. All {(config.Retries + 1)} attempts failed.");
+
         }
     }
 }

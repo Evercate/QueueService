@@ -15,5 +15,15 @@ namespace QueueService.Api.Client
         /// The secret must match the key on the recieving end (the queue api)
         /// </summary>
         public string Secret { get; set; }
+
+        /// <summary>
+        /// Number of retries if call to queue api fails
+        /// </summary>
+        public int Retries { get; set; } = 3;
+
+        /// <summary>
+        /// The delay in seconds between retries
+        /// </summary>
+        public int RetryDelay { get; set; } = 2;
     }
 }
