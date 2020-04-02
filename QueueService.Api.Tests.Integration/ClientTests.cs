@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using QueueService.Api.Client.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -51,7 +52,7 @@ namespace QueueService.Api.Tests.Integration
         [TestMethod]
         public async Task PostTest()
         {
-            await Assert.ThrowsExceptionAsync<Exception>(() => apiClient.EnqueueAsync(new Model.EnqueueRequest { QueueName = "NOT EXISTS", Payload = "test" }));
+            await Assert.ThrowsExceptionAsync<EnqueueFailedException>(() => apiClient.EnqueueAsync(new Model.EnqueueRequest { QueueName = "NOT EXISTS", Payload = "test" }));
         }
     }
 }
