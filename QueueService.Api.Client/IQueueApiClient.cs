@@ -7,6 +7,6 @@ namespace QueueService.Api.Client
 {
     public interface IQueueApiClient
     {
-        Task<EnqueueResponse> EnqueueAsync(EnqueueRequest test);
+        Task<EnqueueResponse> EnqueueAsync(EnqueueRequest request);
     }
 }
