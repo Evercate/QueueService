@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using QueueService.Api.Client.Exceptions;
-using QueueService.Api.Model;
 using System;
 using System.Net.Http;
 using System.Text;
@@ -43,7 +42,7 @@ namespace QueueService.Api.Client
         /// </summary>
         /// <param name="request">Contains payload and settings for the job being added to the queue</param>
         /// <returns></returns>
-        public async Task<EnqueueResponse> EnqueueAsync(EnqueueRequest request)
+        public async Task<Client.Model.EnqueueResponse> EnqueueAsync(Api.Model.EnqueueRequest request)
         {
             var jsonPayload = JsonConvert.SerializeObject(request);
             var startTime = DateTime.UtcNow;
@@ -62,8 +61,16 @@ namespace QueueService.Api.Client
                     var responseString = await response.Content.ReadAsStringAsync();
                     if (response.IsSuccessStatusCode)
                     {
-                        var result = JsonConvert.DeserializeObject<EnqueueResponse>(responseString);
-                        return result;
+                        var result = JsonConvert.DeserializeObject<Api.Model.EnqueueResponse>(responseString);
+
+                        if(!result.Success)
+                            throw new EnqueueFailedException($"Failed to enqueue. The queue service responded with a http status indicating success but the return object says error. Payload: {jsonPayload}  Error message: {result.ErrorMessage}");
+
+                        return new Model.EnqueueResponse() { 
+                            State = result.State,
+                            CreateDate = result.CreateDate,
+                            UniqueKey = result.UniqueKey
+                        };
                     }
                     var timeTaken = DateTime.UtcNow.Subtract(startTime);
                     var callInformation = $"Call took {timeTaken.TotalSeconds}s and response code was \"{response.StatusCode}\" with message \"{response.ReasonPhrase}\" and response content: \"{responseString}\" payload was: \"{jsonPayload}\". it was for queue \"{request.QueueName}\" with unique name \"{request.UniqueKey}\" and was to be executed \"{(request.ExecuteOn.HasValue ? request.ExecuteOn.Value.ToString("yyyy-MM-dd HH:mm:ss") : "immidately")}\". ";
