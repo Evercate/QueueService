@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+
+  queue_api:
+    image: queue/api:latest
+    restart: unless-stopped
+    ports:
+      - 8234:80
+  queue_runner:
+    image: queue/runner:latest
+    restart: unless-stopped
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    user: root
+    ports:
+      - ${QUEUE_DATABASE_PORT}:1433
+    volumes:
+      - queue-db:/var/opt/mssql/data
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${QUEUE_DB_SA_PASSWORD}
+      - MSSQL_PID=Express
+
+volumes:
+  queue-db:
