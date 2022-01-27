@@ -14,7 +14,7 @@ WORKDIR "/src/QueueService.Runner"
 RUN dotnet build "QueueService.Runner.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "QueueService.Runner.csproj" -c Release -o /app/publish
+RUN dotnet publish "QueueService.Runner.csproj" -c DockerDevelopment -o /app/publish
 
 FROM base AS final
 WORKDIR /app

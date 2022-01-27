@@ -17,7 +17,7 @@
     <ProjectReference Include="..\QueueService.DAL\QueueService.DAL.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(Configuration)'=='Release'">
     <Content Update="appsettings.*.json" CopyToPublishDirectory="Never" />
     <Content Update="NLog.config.*.json" CopyToPublishDirectory="Never" />
   </ItemGroup>

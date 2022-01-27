@@ -7,9 +7,21 @@ services:
     restart: unless-stopped
     ports:
       - 8234:80
+    environment:
+      - ASPNETCORE_ENVIRONMENT=DockerDevelopment
+    networks:
+      queue-network:
+      services-network:
+         aliases:
+           - queue-api
   queue_runner:
     image: queue/runner:latest
     restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=DockerDevelopment
+    networks:
+      - queue-network
+      - services-network
   mssql:
     image: mcr.microsoft.com/mssql/server:2019-latest
     user: root
@@ -21,6 +33,16 @@ services:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${QUEUE_DB_SA_PASSWORD}
       - MSSQL_PID=Express
+    networks:
+      queue-network:
+         aliases:
+           - queue-database
 
 volumes:
   queue-db:
+  
+networks:
+  queue-network:
+  services-network:
+    external: true
+    name: services

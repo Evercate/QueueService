@@ -8,12 +8,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="appsettings.Development.json" />
+    <None Remove="appsettings.DockerDevelopment.json" />
     <None Remove="appsettings.json" />
     <None Remove="NLog.config.Development.json" />
     <None Remove="NLog.config.json" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="appsettings.DockerDevelopment.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -42,7 +50,7 @@
     <ProjectReference Include="..\QueueService.Model\QueueService.Model.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(Configuration)'=='Release'">
     <Content Update="appsettings.*.json" CopyToPublishDirectory="Never" />
     <Content Update="NLog.config.*.json" CopyToPublishDirectory="Never" />
   </ItemGroup>

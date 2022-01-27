@@ -16,7 +16,7 @@ WORKDIR "/src/QueueService.Api"
 RUN dotnet build "QueueService.Api.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "QueueService.Api.csproj" -c Release -o /app/publish
+RUN dotnet publish "QueueService.Api.csproj" -c DockerDevelopment -o /app/publish
 
 FROM base AS final
 WORKDIR /app
