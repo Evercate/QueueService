@@ -341,7 +341,12 @@ healthchecksdb
 
 
 /QueueService.Api/appsettings.Development.json
+/QueueService.Api/appsettings.DockerDevelopment.json
 /Build
 /QueueService.Api/NLog.config.Development.json
+/QueueService.Api/NLog.config.DockerDevelopment.json
 /QueueService.Runner/NLog.config.Development.json
+/QueueService.Runner/NLog.config.DockerDevelopment.json
 /NugetKey.txt
+QueueService.Runner/appsettings.Development.json
+QueueService.Runner/appsettings.DockerDevelopment.json
