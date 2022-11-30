@@ -168,8 +168,8 @@ namespace QueueService.Runner
             }
             catch(Exception ex)
             {
-                
-                var resultItem = await queueItemRepository.SetFailed(item.Id, ex.ToString(), nextRun);
+                //We only print the direct error on item (ex.Message) to examine further we can find by the logged errors below
+                var resultItem = await queueItemRepository.SetFailed(item.Id, ex.Message, nextRun);
 
                 //If error state is set it will not retry again so we send out warning
                 if (resultItem.State == QueueItemState.Error)
