@@ -162,7 +162,8 @@ namespace QueueService.Runner
                 }
                 else
                 {
-                    throw new Exception($"Error processing queue item {item.Id}. Endpoint returned status code: {response.StatusCode} {response.ReasonPhrase}");                    
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Error processing queue item {item.Id}. Endpoint returned status code: {response.StatusCode} ({response.ReasonPhrase}). Response content: {responseContent}");                    
                 }
             }
             catch(Exception ex)
