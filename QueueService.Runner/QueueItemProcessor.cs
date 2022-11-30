@@ -173,7 +173,7 @@ namespace QueueService.Runner
                 //If error state is set it will not retry again so we send out warning
                 if (resultItem.State == QueueItemState.Error)
                 {
-                    logger.LogWarning($"Queue item set to error state and will not be retried again. Queue item Id: {resultItem.Id}");
+                    logger.LogWarning(ex, $"Queue item set to error state and will not be retried again. Queue item Id: {resultItem.Id}");
                 }
                 else
                 {
