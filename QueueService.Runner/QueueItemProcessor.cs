@@ -167,13 +167,17 @@ namespace QueueService.Runner
             }
             catch(Exception ex)
             {
-                logger.LogError(ex, $"Error processing queue item {item.Id}");
+                
                 var resultItem = await queueItemRepository.SetFailed(item.Id, ex.ToString(), nextRun);
 
                 //If error state is set it will not retry again so we send out warning
                 if (resultItem.State == QueueItemState.Error)
                 {
                     logger.LogWarning($"Queue item set to error state and will not be retried again. Queue item Id: {resultItem.Id}");
+                }
+                else
+                {
+                    logger.LogInformation(ex, $"Error processing queue item {item.Id}. It will be retried");
                 }
             }
             finally
