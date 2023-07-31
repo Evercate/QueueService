@@ -55,7 +55,7 @@
 
   <ItemGroup>
     <PackageReference Include="dbup" Version="5.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
   </ItemGroup>
 
   <ItemGroup>
