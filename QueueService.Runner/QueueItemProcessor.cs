@@ -58,6 +58,8 @@ namespace QueueService.Runner
         }
         protected async Task BackgroundProcessing(CancellationToken cancellationToken)
         {
+            throw new ApplicationException($"testing exception from background processor {DateTime.UtcNow.ToLongTimeString()}");
+
             bool hasItems = true;
             while (!cancellationToken.IsCancellationRequested)
             {               

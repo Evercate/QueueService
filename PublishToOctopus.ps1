@@ -39,6 +39,41 @@ if(![string]::IsNullOrEmpty($manualVersion))
 	$newVersion = $manualVersion;	
 }
 
+
+
+$apiSentryProjectName = "queue-api"
+$runnerSentryProjectName = "queue-runner"
+
+$sentryOrganizationName = ""
+$sentryAuthToken = ""
+
+
+if([System.IO.File]::Exists(".\SentryToken.txt"))
+{
+	$sentryAuthToken = Get-Content -Path .\SentryToken.txt -First 1
+}
+else 
+{
+	Write-Host $_ -BackgroundColor Black -ForegroundColor Red
+	Write-Host "There must be a SentryToken.txt in the same directory as this build script that contains only the auth token to sentry. Note that the auth token must have project:releases or project:write permissions"
+	Read-Host -Prompt "Enter to exit"
+	exit
+}
+
+if([System.IO.File]::Exists(".\SentryOrganizationName.txt"))
+{
+	$sentryOrganizationName = Get-Content -Path .\SentryOrganizationName.txt -First 1
+}
+else 
+{
+	Write-Host $_ -BackgroundColor Black -ForegroundColor Red
+	Write-Host "There must be a SentryOrganizationName.txt in the same directory as this build script that contains only the sentry organization name."
+	Read-Host -Prompt "Enter to exit"
+	exit
+}
+
+
+
 if (Test-Path ".\Build") 
 { 
 	Remove-Item .\Build -recurse -force
@@ -69,6 +104,9 @@ dotnet octo pack --basePath .\Build\Runner.Tests --id="QueueService.Runner.Tests
 
 Write-Host "Press enter to publish (or close to not publish)" -BackgroundColor Black -ForegroundColor Cyan
 Read-Host
+
+sentry-cli upload-dif --auth-token $sentryAuthToken -o $sentryOrganizationName -p $apiSentryProjectName .\Build\Api --include-sources .\QueueService.Api
+sentry-cli upload-dif --auth-token $sentryAuthToken -o $sentryOrganizationName -p $runnerSentryProjectName .\Build\Runner --include-sources .\QueueService.Runner
 
 $packages = gci ".\Build\*.nupkg"
 foreach ($package in $packages){

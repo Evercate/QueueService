@@ -350,3 +350,5 @@ healthchecksdb
 /NugetKey.txt
 QueueService.Runner/appsettings.Development.json
 QueueService.Runner/appsettings.DockerDevelopment.json
+SentryToken.txt
+SentryOrganizationName.txt

@@ -13,12 +13,12 @@ namespace QueueService.Api.Authentication
             this.appSettings = appSettings.Value;
         }
 
-        public Task<string> LookupAsync(string id)
+        public Task<string?> LookupAsync(string id)
         {
             if (id == appSettings.HmacId)
                 return Task.FromResult(appSettings.HmacSecret);
             else
-                return Task.FromResult<string>(null);
+                return Task.FromResult<string?>(null);
         }
     }
 }
