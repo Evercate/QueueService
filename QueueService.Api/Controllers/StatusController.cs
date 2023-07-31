@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Evercate.TooEasy.Api.Controllers;
+namespace QueueService.Api.Controllers;
 
 public class StatusController : ControllerBase
 {
