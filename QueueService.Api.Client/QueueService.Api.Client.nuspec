@@ -15,8 +15,8 @@
         <group>
 			<dependency id="Evercate.HMACAuthentication" version="1.0.9" />
 			<dependency id="Microsoft.Extensions.Http" version="7.0.0" />
-      <dependency id="Microsoft.Extensions.Options" version="7.0.0" />
-			<dependency id="Newtonsoft.Json" version="13.0.2" />
+      <dependency id="Microsoft.Extensions.Options" version="7.0.1" />
+			<dependency id="Newtonsoft.Json" version="13.0.3" />
         </group>
     </dependencies>
   </metadata>
