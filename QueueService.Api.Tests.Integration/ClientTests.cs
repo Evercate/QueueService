@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -28,20 +29,8 @@ namespace QueueService.Api.Tests.Integration
         [ClassInitialize]
         public static async Task TestFixtureSetup(TestContext context)
         {
-            var hostBuilder = new HostBuilder()
-                .ConfigureWebHost(webHost =>
-                {
-                    webHost.UseTestServer();
-                    webHost.UseStartup<Startup>();
-                });
-            hostBuilder.ConfigureAppConfiguration((context, conf) =>
-            {
-                conf.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-            });
-
-            var host = await hostBuilder.StartAsync();
-
-            client = host.GetTestClient();
+            var factory = new WebApplicationFactory<Program>();
+            client = factory.CreateClient();
             client.BaseAddress = new Uri(client.BaseAddress.ToString().Replace("http", "https"));
 
             loggerMock = new Mock<ILogger<Client.QueueApiClient>>();
